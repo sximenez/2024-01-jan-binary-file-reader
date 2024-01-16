@@ -105,7 +105,7 @@ Before looking into the signature of each file, let's declare the values to chec
 [TestMethod()]
 public void Dictionary_Should_Output_Iso_KeyPair_When_Init()
 {
-    foreach (var entry in mock.IsoValues)
+    foreach (var entry in mock.Signatures)
     {
         foreach (byte b in entry.Key)
         {
@@ -133,6 +133,14 @@ public Program()
         {new byte[]{137, 80, 78, 71, 13, 10, 26, 10}, ".png"}
     };
 }
+```
+
+```console
+// Output.
+
+37 80 68 70 .pdf
+255 216 .jpg
+137 80 78 71 13 10 26 10 .png
 ```
 
 ## Read the byte data of the files.
@@ -205,15 +213,15 @@ public void ReadFile(string filepath)
 
 ## Check the output against the dictionary.
 
-We create method `FindExtensionFromSignature()`.
+We then create method `FindExtensionFromSignature()`.
 
-This method works by iterating over each entry in the dictionary (`.pdf`, `.jpg` and `.png`).
+This method works by iterating over each byte array in the dictionary (`.pdf`, `.jpg` and `.png`).
 
-We compare the first byte (for `.pdf` if would be `37`), against each byte in the output.
+We compare the first byte of the array (for `.pdf` if would be `37`), against each byte in the output.
 
-If there is a `37`, then we check if the following byte is `80` and so on.
+If there is a match, we check against the second byte in the sequence (`80`) and so on.
 
-If the sequence is completed, we break from the loop and assign the value for the key (`.pdf`) to the `Extension` property.
+If the loop iterates over the whole sequence, we break from the loop and assign the value for the key (`.pdf`) to the `Extension` property.
 
 ```csharp
 // Unit test.
@@ -336,7 +344,7 @@ File amended: C:\..\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDk
 File amended: C:\..\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDkYsoggw-unsplash.pdf
 ```
 
-Our files are now sanitized.
+Our files are now sanitized!
 
 ## Conclusion
 
