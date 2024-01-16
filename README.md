@@ -1,5 +1,15 @@
 # Binary file reader
 
+  - [Intro](#intro)
+  - [Context](#context)
+    - [Binary -> decimal, hexadecimal -> ASCII](#binary-decimal-hexadecimal-ascii)
+  - [Access the file directory](#access-the-file-directory)
+  - [Set up the extension dictionary](#set-up-the-extension-dictionary)
+  - [Read the byte data of the files](#read-the-byte-data-of-the-files)
+  - [Check the output against the dictionary](#check-the-output-against-the-dictionary)
+  - [Amend the extension if conflicting](#amend-the-extension-if-conflicting)
+  - [Conclusion](#conclusion)
+
 ## Intro
 
 Common file formats can be identified by a signature (or `magic number`).
@@ -33,7 +43,7 @@ In this exercise, we'll implement a small program to :
 1. Compare it with the actual extension of the file.
 1. Amend if incoherent.
 
-### Binary -> decimal, hexadecimal -> ASCII.
+### Binary -> decimal, hexadecimal -> ASCII
 
 These signatures are basically binary code translated into something more understandable.
 
@@ -95,7 +105,7 @@ The files in the folder have bizarre extensions.
 
 They definitely won't open.
 
-## Set up the extension dictionary.
+## Set up the extension dictionary
 
 Before looking into the signature of each file, let's declare the values to check against.
 
@@ -143,7 +153,7 @@ public Program()
 137 80 78 71 13 10 26 10 .png
 ```
 
-## Read the byte data of the files.
+## Read the byte data of the files
 
 Now, let's create a method `ReadFile()` to try to read the first 10 bytes of each file:
 
@@ -211,7 +221,7 @@ public void ReadFile(string filepath)
 37 80 68 70 45 49 46 55 10 37
 ```
 
-## Check the output against the dictionary.
+## Check the output against the dictionary
 
 We then create method `FindExtensionFromSignature()`.
 
@@ -287,7 +297,7 @@ public void FindExtensionFromSignature(byte[] input)
 }
 ```
 
-## Amend the extension if conflicting.
+## Amend the extension if conflicting
 
 We end the exercise by creating the `AmendExtension()` method.
 
