@@ -30,7 +30,7 @@ namespace BinaryFileReader.Tests
         [TestMethod()]
         public void Dictionary_Should_Output_Iso_KeyPair_When_Init()
         {
-            foreach (var entry in mock.IsoValues)
+            foreach (var entry in mock.Signatures)
             {
                 foreach (byte b in entry.Key)
                 {

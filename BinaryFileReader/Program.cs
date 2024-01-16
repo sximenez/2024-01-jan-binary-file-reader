@@ -5,7 +5,7 @@
         public string[] Folder { get; set; }
         public string Input { get; set; }
         public List<byte[]> Output { get; set; }
-        public Dictionary<byte[], string> IsoValues { get; set; }
+        public Dictionary<byte[], string> Signatures { get; set; }
         public string Extension { get; set; }
 
         public void ReadDirectory(string path)
@@ -53,7 +53,7 @@
 
         public void FindExtensionFromSignature(byte[] input)
         {
-            foreach (var entry in IsoValues)
+            foreach (var entry in Signatures)
             {
                 Extension = string.Empty;
 
@@ -118,10 +118,10 @@
             Input = string.Empty;
             Output = new List<byte[]>();
 
-            IsoValues = new Dictionary<byte[], string>(){
-                {ToDecimal("%PDF-"), ".pdf"},
-                {ToDecimal("JFIF"), ".jpg"},
-                {ToDecimal("PNG"), ".png"}
+            Signatures = new Dictionary<byte[], string>(){
+                {new byte[]{37, 80, 68, 70}, ".pdf"},
+                {new byte[]{255, 216}, ".jpg"},
+                {new byte[]{137, 80, 78, 71, 13, 10, 26, 10}, ".png"}
             };
 
             Extension = string.Empty;
