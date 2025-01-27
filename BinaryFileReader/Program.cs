@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Microsoft.VisualBasic.FileIO;
+using System.IO;
+using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("UnitTests")]
 
@@ -6,61 +8,35 @@ namespace BinaryFileReader
 {
     public class Program
     {
-        public string[] Folder { get; private set; }
-        public string Input { get; set; }
-        public List<byte[]> Output { get; }
+        public string[] Files { get; private set; }
         public Dictionary<byte[], string> Signatures { get; }
-        public string Extension { get; private set; }
 
-        public void ReadDirectory(string path)
-        {
-            Folder = Directory.GetFiles(path);
-        }
-
-        internal void ReadFile(string filepath)
+        internal byte[] ReadFile(string filePath)
         {
             // FileMode = how to open the file.
             // FileAccess = what can be done after opening the file.
 
-            List<byte> output = new List<byte>();
+            byte[] sequence = new byte[10];
 
-            FileStream fs = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+            FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             BinaryReader reader = new BinaryReader(fs);
 
             using (reader)
             {
                 for (var i = reader.BaseStream.Position; i < 10; i++)
                 {
-                    var entry = reader.ReadByte();
-                    output.Add(entry);
+                    sequence[i] = reader.ReadByte();
                 }
             }
 
-            Output.Add(output.ToArray());
+            return sequence;
         }
 
-        public void AmendExtension(string filepath)
+        internal string FindExtensionFromSignature(byte[] input)
         {
-            string actual = Path.GetExtension(filepath);
-
-            if (actual != Extension)
-            {
-                string output = Path.ChangeExtension(filepath, Extension);
-                File.Move(filepath, output);
-                Console.WriteLine($"File amended: {output}");
-            }
-            else
-            {
-                Console.WriteLine("Coherent file extension.");
-            }
-        }
-
-        internal void FindExtensionFromSignature(byte[] input)
-        {
+            string extension = string.Empty;
             foreach (var entry in Signatures)
             {
-                Extension = string.Empty;
-
                 byte expected = entry.Key[0];
 
                 for (int i = 0; i < input.Length; i++)
@@ -79,15 +55,33 @@ namespace BinaryFileReader
                             }
                         }
 
-                        Extension = entry.Value;
+                        extension = entry.Value;
                         break;
                     }
                 }
 
-                if (Extension.Length != 0)
+                if (extension.Length != 0)
                 {
                     break;
                 }
+            }
+
+            return extension;
+        }
+
+        internal void AmendExtension(string filePath, string extension)
+        {
+            string expected = Path.GetExtension(filePath);
+
+            if (expected != extension)
+            {
+                string actual = Path.ChangeExtension(filePath, extension);
+                File.Move(filePath, actual);
+                Console.WriteLine($"File amended: {actual}");
+            }
+            else
+            {
+                Console.WriteLine("Coherent file extension.");
             }
         }
 
@@ -118,29 +112,26 @@ namespace BinaryFileReader
 
         public Program(string dirPath)
         {
-            Folder = Array.Empty<string>();
-            ReadDirectory(dirPath);
-            Input = string.Empty;
-            Output = new List<byte[]>();
-
-            Signatures = new Dictionary<byte[], string>(){
-                {new byte[]{37, 80, 68, 70}, ".pdf"},
-                {new byte[]{255, 216}, ".jpg"},
-                {new byte[]{137, 80, 78, 71, 13, 10, 26, 10}, ".png"}
+            Files = Directory.GetFiles(dirPath);
+            Signatures = new Dictionary<byte[], string>
+            {
+                { new byte[] { 37, 80, 68, 70 }, ".pdf"},
+                { new byte[] { 255, 216 }, ".jpg"},
+                { new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }, ".png"}
             };
-
-            Extension = string.Empty;
         }
 
         public static void Main(string[] args)
         {
-            var reader = new Program(@"");
+            var reader = new Program(@"C:\Users\steven.jimenez\source\exports\cle-medicalnet-mignon\test");
 
-            for (int i = 0; i < reader.Folder.Length; i++)
+            for (int i = 0; i < reader.Files.Length; i++)
             {
-                reader.ReadFile(reader.Folder[i]);
-                reader.FindExtensionFromSignature(reader.Output[i]);
-                reader.AmendExtension(reader.Folder[i]);
+                string filePath = reader.Files[i];
+
+                var byteSequence = reader.ReadFile(filePath);
+                string extension = reader.FindExtensionFromSignature(byteSequence);
+                reader.AmendExtension(filePath, extension);
             }
         }
     }

@@ -1,150 +1,123 @@
 using BinaryFileReader;
+using System.Globalization;
 
 namespace UnitTests
 {
     [TestClass()]
     public class TestsProgram
     {
-        private Program mock;
-        private string filepath;
-        private string directory;
+        private Program _mock;
+        private string _directory;
+        private string _corruptedDir;
 
         [TestInitialize()]
         public void Init()
         {
+            _directory = @"C:\Users\steven.jimenez\source\repos\2024-01-jan-binary-file-reader\test_files";
+            _corruptedDir = @"C:\Users\steven.jimenez\source\repos\2024-01-jan-binary-file-reader\test_files\corrupted";
 
-            filepath = @"C:\Users\steven.jimenez\source\repos\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDkYsoggw-unsplash.jpg";
-
-            directory = @"C:\Users\steven.jimenez\source\repos\2024-01-jan-binary-file-reader\test_files";
-            
-            mock = new Program(directory);
-
-            mock.ReadDirectory(directory);
+            _mock = new Program(_directory);
         }
 
         [TestMethod()]
-        public void Folder_Should_Output_Dir_Files_When_Init()
+        public void Constructor_ValidDir_ValidFileNames()
         {
-            Console.WriteLine(string.Join("\n", mock.Folder));
-        }
+            var expected = new string[] {
+                "jesus-curiel-1YpDkYsoggw-unsplash.jpg",
+                "jesus-curiel-1YpDkYsoggw-unsplash.pdf",
+                "jesus-curiel-1YpDkYsoggw-unsplash.png"
+            };
 
-        [TestMethod()]
-        public void Dictionary_Should_Output_Iso_KeyPair_When_Init()
-        {
-            foreach (var entry in mock.Signatures)
+            for (int i = 0; i < expected.Length; i++)
             {
-                foreach (byte b in entry.Key)
-                {
-                    Console.Write($"{b} ");
-                }
-
-                Console.WriteLine($"{entry.Value}");
+                string fileName = Path.GetFileName(_mock.Files[i]);
+                Assert.AreEqual(expected[i], fileName);
             }
         }
 
         [TestMethod()]
-        public void ToHexadecimal_Should_Output_When_Populated()
+        public void ToHexadecimal_ValidInput_ValidOutput()
         {
-            mock.Input = "%PDF-";
-            string[] result = mock.ToHexadecimal(mock.Input);
-            Console.WriteLine(string.Join(" ", result));
+            string[] expected = ["25", "50", "44", "46", "2D"];
+
+            string _mockInput = "%PDF-";
+            string[] actual = _mock.ToHexadecimal(_mockInput);
+
+            CollectionAssert.AreEqual(expected, actual);
+            Console.WriteLine(string.Join(" ", actual));
         }
 
         [TestMethod()]
-        public void ToDecimal_Should_Output_When_Populated()
+        public void ToDecimal_ValidInput_ValidOutput()
         {
-            mock.Input = "PNG";
-            byte[] result = mock.ToDecimal(mock.Input);
-            Console.WriteLine(string.Join(" ", result));
+            byte[] expected = [80, 78, 71];
+
+            string _mockInput = "PNG";
+            byte[] actual = _mock.ToDecimal(_mockInput);
+
+            CollectionAssert.AreEqual(expected, actual);
+            Console.WriteLine(string.Join(" ", actual));
         }
 
         [TestMethod()]
-        public void ReadFile_Should_Read_All_Files_When_Directory_Exists()
+        public void ReadFile_ValidDir_ValidOutput()
         {
-            if (mock.Folder != Array.Empty<string>())
+            var expected = new List<byte[]>()
             {
-                foreach (var file in mock.Folder)
-                {
-                    mock.ReadFile(file);
-                }
+                new byte[] { 255, 216, 255, 224, 0, 16, 74, 70, 73, 70 },
+                new byte[] { 37, 80, 68, 70, 45, 49, 46, 55, 10, 37 },
+                new byte[] { 137, 80, 78, 71, 13, 10, 26, 10, 0, 0 }
+            };
 
-            }
-            else
+            for (int i = 0; i < _mock.Files.Length; i++)
             {
-                Assert.Fail($"File doesn't exist: {filepath}");
-            }
-
-            foreach (var entry in mock.Output)
-            {
-                Console.WriteLine(string.Join(" ", entry));
-            }
-
-        }
-
-        [TestMethod()]
-        public void ReadFile_Should_Read_Individual_File_When_FilePath_Exists()
-        {
-            if (File.Exists(filepath))
-            {
-                mock.ReadFile(filepath);
-
-                Console.WriteLine(string.Join(" ", mock.Output[0]));
-            }
-            else
-            {
-                Assert.Fail($"File doesn't exist: {filepath}");
+                var actual = _mock.ReadFile(_mock.Files[i]);
+                CollectionAssert.AreEqual(expected[i], actual);
+                Console.WriteLine(string.Join(" ", actual));
             }
         }
 
         [TestMethod()]
-        public void FindExtension_Should_Output_Extension_In_Signature()
+        public void FindExtension_ValidDir_ValidOutput()
         {
-            if (File.Exists(filepath))
+            var expected = new string[] {
+                ".jpg",
+                ".pdf",
+                ".png"
+            };
+
+            for (int i = 0; i < _mock.Files.Length; i++)
             {
-                mock.ReadFile(filepath);
-                mock.FindExtensionFromSignature(mock.Output[0]);
-                Console.WriteLine(mock.Extension);
-            }
-            else
-            {
-                Assert.Fail($"File doesn't exist: {filepath}");
+                var byteSequence = _mock.ReadFile(_mock.Files[i]);
+                var actual = _mock.FindExtensionFromSignature(byteSequence);
+
+                Assert.AreEqual(expected[i], actual);
             }
         }
 
         [TestMethod()]
-        public void FindExtension_Should_Output_All_File_Extensions_In_Signature()
+        public void AmendExtension_InvalidInput_ValidOutput()
         {
-            if (mock.Folder != Array.Empty<string>())
-            {
-                for (int i = 0; i < mock.Folder.Length; i++)
-                {
-                    mock.ReadFile(mock.Folder[i]);
-                    mock.FindExtensionFromSignature(mock.Output[i]);
-                    Console.WriteLine(mock.Extension);
-                }
-            }
-            else
-            {
-                Assert.Fail($"File doesn't exist: {filepath}");
-            }
-        }
+            var di = Directory.CreateDirectory(Path.Combine(_directory, "unit-test"));
+            var corruptedFiles = Directory.GetFiles(_corruptedDir).ToList();
 
-        [TestMethod()]
-        public void AmendExtension_Should_Output_True_When_Different()
-        {
-            if (mock.Folder != Array.Empty<string>())
+            foreach (string file in corruptedFiles)
             {
-                for (int i = 0; i < mock.Folder.Length; i++)
-                {
-                    mock.ReadFile(mock.Folder[i]);
-                    mock.FindExtensionFromSignature(mock.Output[i]);
-                    mock.AmendExtension(mock.Folder[i]);
-                }
-            }
-            else
+                File.Copy(file, Path.Combine(di.FullName, Path.GetFileName(file)), true);
+            };
+
+            foreach (var file in corruptedFiles)
             {
-                Assert.Fail($"File doesn't exist: {filepath}");
-            }
+                var byteSequence = _mock.ReadFile(file);
+                var extension = _mock.FindExtensionFromSignature(byteSequence);
+                _mock.AmendExtension(file, extension);
+            };
+
+            string[] expected = _mock.Files;
+            string[] actual = Directory.GetFiles(di.FullName);
+
+            CollectionAssert.AreEqual(expected, actual);
+            Directory.Delete(di.FullName, true);
         }
     }
 }
