@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BinaryFileReader")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+38757cd07c56342b37000f89c688ded4bcd85713")]
 [assembly: System.Reflection.AssemblyProductAttribute("BinaryFileReader")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BinaryFileReader")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
