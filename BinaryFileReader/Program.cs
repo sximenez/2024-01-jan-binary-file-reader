@@ -1,19 +1,23 @@
-﻿namespace BinaryFileReader
+﻿using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("UnitTests")]
+
+namespace BinaryFileReader
 {
     public class Program
     {
-        public string[] Folder { get; set; }
+        public string[] Folder { get; private set; }
         public string Input { get; set; }
-        public List<byte[]> Output { get; set; }
-        public Dictionary<byte[], string> Signatures { get; set; }
-        public string Extension { get; set; }
+        public List<byte[]> Output { get; }
+        public Dictionary<byte[], string> Signatures { get; }
+        public string Extension { get; private set; }
 
         public void ReadDirectory(string path)
         {
             Folder = Directory.GetFiles(path);
         }
 
-        public void ReadFile(string filepath)
+        internal void ReadFile(string filepath)
         {
             // FileMode = how to open the file.
             // FileAccess = what can be done after opening the file.
@@ -51,7 +55,7 @@
             }
         }
 
-        public void FindExtensionFromSignature(byte[] input)
+        internal void FindExtensionFromSignature(byte[] input)
         {
             foreach (var entry in Signatures)
             {
@@ -87,7 +91,7 @@
             }
         }
 
-        public byte[] ToDecimal(string input)
+        internal byte[] ToDecimal(string input)
         {
             List<byte> output = new List<byte>();
 
@@ -99,7 +103,7 @@
             return output.ToArray();
         }
 
-        public string[] ToHexadecimal(string input)
+        internal string[] ToHexadecimal(string input)
         {
             List<string> output = new List<string>();
 
@@ -112,9 +116,10 @@
             return output.ToArray();
         }
 
-        public Program()
+        public Program(string dirPath)
         {
             Folder = Array.Empty<string>();
+            ReadDirectory(dirPath);
             Input = string.Empty;
             Output = new List<byte[]>();
 
@@ -129,6 +134,14 @@
 
         public static void Main(string[] args)
         {
+            var reader = new Program(@"");
+
+            for (int i = 0; i < reader.Folder.Length; i++)
+            {
+                reader.ReadFile(reader.Folder[i]);
+                reader.FindExtensionFromSignature(reader.Output[i]);
+                reader.AmendExtension(reader.Folder[i]);
+            }
         }
     }
 }
