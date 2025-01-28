@@ -148,7 +148,8 @@ internal string FindExtensionFromSignature(byte[] input)
         // First check: the input signature needs to be at least as long as the target signature.
         if (input.Length >= signature.Length)
         {
-            // Second check: if the input signature is equal to the target signature, return the target extension.
+            // Second check: if the input signature is equal to the target signature,
+            // return the target extension.
             if (input.Take(signature.Length).SequenceEqual(signature))
             {
                 return entry.Value;
@@ -156,6 +157,7 @@ internal string FindExtensionFromSignature(byte[] input)
         }
     }
 
+    // Otherwise, return an empty string.
     return string.Empty;
 }
 ```
@@ -201,7 +203,8 @@ internal void AmendExtension(string filePath, string extension)
 [TestMethod()]
 public void AmendExtension_InvalidInput_ValidOutput()
 {
-    var testDir = Directory.CreateDirectory(Path.Combine(_directory, "unit-test")).FullName; // Create test directory.
+    // Create test directory.
+    var testDir = Directory.CreateDirectory(Path.Combine(_directory, "unit-test")).FullName;
     var corruptedFiles = Directory.GetFiles(_corruptedDir);
 
     // Copy corrupted test files to created test directory.
