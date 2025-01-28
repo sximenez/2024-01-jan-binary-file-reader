@@ -34,52 +34,32 @@ namespace BinaryFileReader
 
         internal string FindExtensionFromSignature(byte[] input)
         {
-            string extension = string.Empty;
             foreach (var entry in Signatures)
             {
-                byte expected = entry.Key[0];
-
-                for (int i = 0; i < input.Length; i++)
+                byte[] signature = entry.Key;
+                if (input.Length >= signature.Length)
                 {
-                    byte actual = input[i];
-
-                    if (actual == expected)
+                    if (input.Take(signature.Length).SequenceEqual(signature))
                     {
-                        for (int j = 1; j < entry.Key.Length; j++)
-                        {
-                            byte next = input[i + j];
-
-                            if (next != entry.Key[j])
-                            {
-                                break;
-                            }
-                        }
-
-                        extension = entry.Value;
-                        break;
+                        return entry.Value;
                     }
-                }
-
-                if (extension.Length != 0)
-                {
-                    break;
                 }
             }
 
-            return extension;
+            return string.Empty;
         }
 
         internal void AmendExtension(string filePath, string extension)
         {
-            string expected = Path.GetExtension(filePath);
-            string actual = Path.ChangeExtension(filePath, extension);
+            string actual = Path.GetExtension(filePath);
+            string expected = Path.ChangeExtension(filePath, extension);
 
-            if (expected == extension)
+            if (actual == extension)
             {
                 return;
             }
 
-            File.Move(filePath, actual);
+            File.Move(filePath, expected);
         }
 
         internal byte[] ToDecimal(string input)
