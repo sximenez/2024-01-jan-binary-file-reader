@@ -1,5 +1,4 @@
 using BinaryFileReader;
-using System.Globalization;
 
 namespace UnitTests
 {
