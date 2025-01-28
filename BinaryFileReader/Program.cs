@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualBasic.FileIO;
-using System.IO;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("UnitTests")]
 
@@ -100,23 +98,30 @@ namespace BinaryFileReader
 
         public static void Main(string[] args)
         {
-            try
+            string filePath = string.Empty;
+
+            var reader = new Program(@"dir-file-path-here");
+            int filesCount = reader.Files.Length;
+
+            for (int i = 0; i < reader.Files.Length; i++)
             {
-                var reader = new Program(@"");
-
-                for (int i = 0; i < reader.Files.Length; i++)
+                filePath = reader.Files[i];
+                try
                 {
-                    string filePath = reader.Files[i];
-
                     var byteSequence = reader.ReadFile(filePath);
                     string extension = reader.FindExtensionFromSignature(byteSequence);
                     reader.AmendExtension(filePath, extension);
+
+                    Console.Write($"\rFiles left: {filesCount - i}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"\tError processing {Path.GetFileName(filePath)}; {ex.Message}");
                 }
             }
-            catch (Exception)
-            {
-                throw;
-            }
+
+            Console.WriteLine($"{Environment.NewLine}DONE.");
         }
     }
 }

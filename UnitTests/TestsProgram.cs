@@ -13,8 +13,9 @@ namespace UnitTests
         [TestInitialize()]
         public void Init()
         {
-            _directory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test-files");
-            _corruptedDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test_files", "corrupted");
+            string projectRootDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\"));
+            _directory = Path.Combine(projectRootDir, "test-files");
+            _corruptedDir = Path.Combine(projectRootDir, "test-files", "corrupted");
 
             _mock = new Program(_directory);
         }

@@ -111,8 +111,9 @@ private string _corruptedDir;
 [TestInitialize()]
 public void Init()
 {
-    _directory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test-files");
-    _corruptedDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test_files", "corrupted");
+    string projectRootDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\"));
+    _directory = Path.Combine(projectRootDir, "test-files");
+    _corruptedDir = Path.Combine(projectRootDir, "test-files", "corrupted");
 
     _mock = new Program(_directory);
 }
@@ -236,23 +237,31 @@ public void AmendExtension_InvalidInput_ValidOutput()
 ```csharp
 public static void Main(string[] args)
 {
-    try
+    string filePath = string.Empty;
+
+    var reader = new Program(@"dir-file-path-here");
+    int filesCount = reader.Files.Length;
+
+    for (int i = 0; i < reader.Files.Length; i++)
     {
-        var reader = new Program(@"C:\...\2024-01-jan-binary-file-reader\test_files\corrupted");
-
-        for (int i = 0; i < reader.Files.Length; i++)
+        filePath = reader.Files[i];
+        try
         {
-            string filePath = reader.Files[i];
-
             var byteSequence = reader.ReadFile(filePath);
             string extension = reader.FindExtensionFromSignature(byteSequence);
             reader.AmendExtension(filePath, extension);
+
+            // Log processing status.
+            Console.Write($"\rFiles left: {filesCount - i}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine();
+            Console.WriteLine($"\tError processing {Path.GetFileName(filePath)}; {ex.Message}");
         }
     }
-    catch (Exception)
-    {
-        throw;
-    }
+
+    Console.WriteLine($"{Environment.NewLine}DONE.");
 }
 ```
 
