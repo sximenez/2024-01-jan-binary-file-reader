@@ -111,8 +111,8 @@ private string _corruptedDir;
 [TestInitialize()]
 public void Init()
 {
-    _directory = @"C:\Users\steven.jimenez\source\repos\2024-01-jan-binary-file-reader\test_files";
-    _corruptedDir = @"C:\Users\steven.jimenez\source\repos\2024-01-jan-binary-file-reader\test_files\corrupted";
+    _directory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test-files");
+    _corruptedDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test_files", "corrupted");
 
     _mock = new Program(_directory);
 }
