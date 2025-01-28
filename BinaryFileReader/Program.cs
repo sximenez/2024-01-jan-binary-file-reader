@@ -72,17 +72,14 @@ namespace BinaryFileReader
         internal void AmendExtension(string filePath, string extension)
         {
             string expected = Path.GetExtension(filePath);
+            string actual = Path.ChangeExtension(filePath, extension);
 
-            if (expected != extension)
+            if (expected == extension)
             {
-                string actual = Path.ChangeExtension(filePath, extension);
-                File.Move(filePath, actual);
-                Console.WriteLine($"File amended: {actual}");
+                return;
             }
-            else
-            {
-                Console.WriteLine("Coherent file extension.");
-            }
+
+            File.Move(filePath, actual);
         }
 
         internal byte[] ToDecimal(string input)
@@ -123,15 +120,22 @@ namespace BinaryFileReader
 
         public static void Main(string[] args)
         {
-            var reader = new Program(@"C:\Users\steven.jimenez\source\exports\cle-medicalnet-mignon\test");
-
-            for (int i = 0; i < reader.Files.Length; i++)
+            try
             {
-                string filePath = reader.Files[i];
+                var reader = new Program(@"");
 
-                var byteSequence = reader.ReadFile(filePath);
-                string extension = reader.FindExtensionFromSignature(byteSequence);
-                reader.AmendExtension(filePath, extension);
+                for (int i = 0; i < reader.Files.Length; i++)
+                {
+                    string filePath = reader.Files[i];
+
+                    var byteSequence = reader.ReadFile(filePath);
+                    string extension = reader.FindExtensionFromSignature(byteSequence);
+                    reader.AmendExtension(filePath, extension);
+                }
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

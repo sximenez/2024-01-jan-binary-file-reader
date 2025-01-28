@@ -98,26 +98,27 @@ namespace UnitTests
         [TestMethod()]
         public void AmendExtension_InvalidInput_ValidOutput()
         {
-            var di = Directory.CreateDirectory(Path.Combine(_directory, "unit-test"));
-            var corruptedFiles = Directory.GetFiles(_corruptedDir).ToList();
+            var testDir = Directory.CreateDirectory(Path.Combine(_directory, "unit-test")).FullName;
+            var corruptedFiles = Directory.GetFiles(_corruptedDir);
 
             foreach (string file in corruptedFiles)
             {
-                File.Copy(file, Path.Combine(di.FullName, Path.GetFileName(file)), true);
+                File.Copy(file, Path.Combine(testDir, Path.GetFileName(file)), true);
             };
 
-            foreach (var file in corruptedFiles)
+            var testFiles = Directory.GetFiles(testDir);
+            foreach (var file in testFiles)
             {
                 var byteSequence = _mock.ReadFile(file);
                 var extension = _mock.FindExtensionFromSignature(byteSequence);
                 _mock.AmendExtension(file, extension);
             };
 
-            string[] expected = _mock.Files;
-            string[] actual = Directory.GetFiles(di.FullName);
+            string[] expected = _mock.Files.Select(e => Path.GetFileName(e)).ToArray();
+            string[] actual = Directory.GetFiles(testDir).Select(e => Path.GetFileName(e)).ToArray();
 
             CollectionAssert.AreEqual(expected, actual);
-            Directory.Delete(di.FullName, true);
+            Directory.Delete(testDir, true);
         }
     }
 }
