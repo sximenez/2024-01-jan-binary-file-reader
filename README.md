@@ -1,18 +1,20 @@
 # Binary file reader
 
+  <!--TOC-->
   - [Intro](#intro)
-  - [Context](#context)
     - [Binary -> decimal, hexadecimal -> ASCII](#binary-decimal-hexadecimal-ascii)
-  - [Access the file directory](#access-the-file-directory)
-  - [Set up the extension dictionary](#set-up-the-extension-dictionary)
-  - [Read the byte data of the files](#read-the-byte-data-of-the-files)
-  - [Check the output against the dictionary](#check-the-output-against-the-dictionary)
-  - [Amend the extension if conflicting](#amend-the-extension-if-conflicting)
+  - [Practice](#practice)
+    - [Class declaration](#class-declaration)
+    - [Read files](#read-files)
+    - [Find extensions from signatures](#find-extensions-from-signatures)
+    - [Amend extensions if incoherent](#amend-extensions-if-incoherent)
+    - [Main entry point](#main-entry-point)
   - [Conclusion](#conclusion)
+<!--/TOC-->
 
 ## Intro
 
-Common file formats can be identified by a signature (or `magic number`).
+Common file formats can be identified by a signature or `magic number`:
 
 | Format | Magic number (decimal) | ASCII |
 | --- | --- | --- |
@@ -24,24 +26,7 @@ This signature is embedded into the file data itself, when the file is created.
 
 It is independent of the extension of the file.
 
-If the extension is modified, the signature isn't, provided that the signature exists.
-
-We can rely on these magic numbers to identify the format of a file.
-
-## Context
-
-Imagine that you have to perform an `ETL` operation on data containing hundreds of pdfs and images (see [ETL](https://github.com/sximenez/2024-01-jan-etl-extract-transform-load)).
-
-For some reason, some files have conflicting extensions (e.g. `.pd` instead of `.pdf`).
-
-This could potentially lead to display problems on a browser.
-
-In this exercise, we'll implement a small program to : 
-
-1. Read the signature of a file.
-1. Look up the corresponding extension on a list.
-1. Compare it with the actual extension of the file.
-1. Amend if incoherent.
+If the extension is modified, we can rely on the signature to accurately identify the format.
 
 ### Binary -> decimal, hexadecimal -> ASCII
 
@@ -56,305 +41,255 @@ For `.pdf`,
 // Translates into ASCII: %PDF
 ```
 
-## Access the file directory
+## Practice
 
-Let's begin by creating a method `ReadDirectory()` to access the directory containing the files:
+We have to perform an `ETL` operation on data containing hundreds of pdfs and images (see [ETL](https://github.com/sximenez/2024-01-jan-etl-extract-transform-load)).
+
+For some reason, some files have conflicting extensions (e.g. `.pd` instead of `.pdf`).
+
+This leads to display problems on the browser.
+
+In this exercise, we'll implement a small program to: 
+
+1. Read the signature of a file.
+1. Look up the corresponding extension on a list.
+1. Compare it with the actual extension of the file.
+1. Amend if incoherent.
+
+### Class declaration
 
 ```csharp
-// Unit test.
-
-[TestInitialize()]
-public void Init()
-{
-    mock = new Program();
-
-    directory = @"your_directory_path_here";
-
-    mock.ReadDirectory(directory);
-}
-
-[TestMethod()]
-public void Folder_Should_Output_Dir_Files_When_Init()
-{
-    Console.WriteLine(string.Join("\n", mock.Folder));
-}
+public string[] Files { get; private set; } // Stores the files to process.
+public Dictionary<byte[], string> Signatures { get; } // Stores the target signatures.
 ```
 
 ```csharp
-// Program.
-
-public class Program
+public Program(string dirPath)
 {
-    public string[] Folder { get; set; }
-
-    public void ReadDirectory(string path)
-        {
-            Folder = Directory.GetFiles(path);
-        }
-```
-
-```console
-// Output.
-
-C:\..\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDkYsoggw-unsplash.azerazr
-C:\..\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDkYsoggw-unsplash.qskdjfhk
-C:\..\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDkYsoggw-unsplash.wcxvwxcv
-```
-
-The files in the folder have bizarre extensions.
-
-They definitely won't open.
-
-## Set up the extension dictionary
-
-Before looking into the signature of each file, let's declare the values to check against.
-
-```csharp
-// Unit test.
-
-[TestMethod()]
-public void Dictionary_Should_Output_Iso_KeyPair_When_Init()
-{
-    foreach (var entry in mock.Signatures)
+    Files = Directory.GetFiles(dirPath);
+    Signatures = new Dictionary<byte[], string>
     {
-        foreach (byte b in entry.Key)
-        {
-            Console.Write($"{b} ");
-        }
-
-        Console.WriteLine($"{entry.Value}");
-    }
-}
-```
-
-```csharp
-// Program.
-
-public string[] Folder { get; set; }
-public Dictionary<byte[], string> Signatures { get; set; }
-
-public Program()
-{
-    Folder = Array.Empty<string>();
-
-    Signatures = new Dictionary<byte[], string>(){
-        {new byte[]{37, 80, 68, 70}, ".pdf"},
-        {new byte[]{255, 216}, ".jpg"},
-        {new byte[]{137, 80, 78, 71, 13, 10, 26, 10}, ".png"}
+        { new byte[] { 37, 80, 68, 70 }, ".pdf"},
+        { new byte[] { 255, 216 }, ".jpg"},
+        { new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }, ".png"}
     };
 }
 ```
 
-```console
-// Output.
-
-37 80 68 70 .pdf
-255 216 .jpg
-137 80 78 71 13 10 26 10 .png
-```
-
-## Read the byte data of the files
-
-Now, let's create a method `ReadFile()` to try to read the first 10 bytes of each file:
+### Read files
 
 ```csharp
-// Unit test.
-
-[TestMethod()]
-public void ReadFile_Should_Read_All_Files_When_Directory_Exists()
-{
-    if (mock.Folder != Array.Empty<string>())
-    {
-        foreach (var file in mock.Folder)
-        {
-            mock.ReadFile(file);
-        }
-
-    }
-    else
-    {
-        Assert.Fail($"File doesn't exist: {filepath}");
-    }
-
-    foreach (var entry in mock.Output)
-    {
-        Console.WriteLine(string.Join(" ", entry));
-    }
-
-}
-```
-
-```csharp
-// Program.
-// Here, we use C#'s predefined classes FileStream and BinaryReader.
-
-public List<byte[]> Output { get; set; }
-
-public void ReadFile(string filepath)
+internal byte[] ReadFile(string filePath) // It takes in a file path.
 {
     // FileMode = how to open the file.
     // FileAccess = what can be done after opening the file.
 
-    List<byte> output = new List<byte>();
+    byte[] sequence = new byte[10]; // We can limit our sequences to ten bytes.
 
-    FileStream fs = new FileStream(filepath, FileMode.Open, FileAccess.Read);
-    BinaryReader reader = new BinaryReader(fs);
+    FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read); // FileStream allows to access and read the file.
+    BinaryReader reader = new BinaryReader(fs); // BinaryReader simplifies the reading operation.
 
     using (reader)
     {
         for (var i = reader.BaseStream.Position; i < 10; i++)
         {
-            var entry = reader.ReadByte();
-            output.Add(entry);
+            sequence[i] = reader.ReadByte(); // We read each byte and store it.
         }
     }
 
-    Output.Add(output.ToArray());
+    return sequence; // We return the byte array.
+}
+```
+
+```csharp
+// Unit test.
+
+private Program _mock;
+private string _directory;
+private string _corruptedDir;
+
+[TestInitialize()]
+public void Init()
+{
+    string projectRootDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\"));
+    _directory = Path.Combine(projectRootDir, "test-files");
+    _corruptedDir = Path.Combine(projectRootDir, "test-files", "corrupted");
+
+    _mock = new Program(_directory);
+}
+
+[TestMethod()]
+public void ReadFile_ValidDir_ValidOutput()
+{
+    var expected = new List<byte[]>()
+    {
+        new byte[] { 255, 216, 255, 224, 0, 16, 74, 70, 73, 70 },
+        new byte[] { 37, 80, 68, 70, 45, 49, 46, 55, 10, 37 },
+        new byte[] { 137, 80, 78, 71, 13, 10, 26, 10, 0, 0 }
+    };
+
+    for (int i = 0; i < _mock.Files.Length; i++)
+    {
+        var actual = _mock.ReadFile(_mock.Files[i]);
+        CollectionAssert.AreEqual(expected[i], actual);
+        Console.WriteLine(string.Join(" ", actual));
+    }
+}
+```
+
+### Find extensions from signatures
+
+```csharp
+internal string FindExtensionFromSignature(byte[] input)
+{
+    foreach (var entry in Signatures) // We loop on each target signature.
+    {
+        byte[] signature = entry.Key;
+
+        // First check: the input signature needs to be at least as long as the target signature.
+        if (input.Length >= signature.Length)
+        {
+            // Second check: if the input signature is equal to the target signature,
+            // return the target extension.
+            if (input.Take(signature.Length).SequenceEqual(signature))
+            {
+                return entry.Value;
+            }
+        }
+    }
+
+    // Otherwise, return an empty string.
+    return string.Empty;
+}
+```
+
+```csharp
+[TestMethod()]
+public void FindExtension_ValidDir_ValidOutput()
+{
+    var expected = new string[] {
+        ".jpg",
+        ".pdf",
+        ".png"
+    };
+
+    for (int i = 0; i < _mock.Files.Length; i++)
+    {
+        var byteSequence = _mock.ReadFile(_mock.Files[i]);
+        var actual = _mock.FindExtensionFromSignature(byteSequence);
+
+        Assert.AreEqual(expected[i], actual);
+    }
+}
+```
+
+### Amend extensions if incoherent
+
+```csharp
+internal void AmendExtension(string filePath, string extension)
+{
+    string actual = Path.GetExtension(filePath); // Actual file name without processing.
+    string expected = Path.ChangeExtension(filePath, extension); // Expected file name after processing.
+
+    if (actual == extension) // If correct, return.
+    {
+        return;
+    }
+
+    File.Move(filePath, expected); // Otherwise, specify new file extension on name.
+}
+```
+
+```csharp
+[TestMethod()]
+public void AmendExtension_InvalidInput_ValidOutput()
+{
+    // Create test directory.
+    var testDir = Directory.CreateDirectory(Path.Combine(_directory, "unit-test")).FullName;
+    var corruptedFiles = Directory.GetFiles(_corruptedDir);
+
+    // Copy corrupted test files to created test directory.
+    foreach (string file in corruptedFiles)
+    {
+        File.Copy(file, Path.Combine(testDir, Path.GetFileName(file)), true);
+    };
+
+    // Process corrupted files.
+    var testFiles = Directory.GetFiles(testDir);
+    foreach (var file in testFiles)
+    {
+        var byteSequence = _mock.ReadFile(file);
+        var extension = _mock.FindExtensionFromSignature(byteSequence);
+        _mock.AmendExtension(file, extension);
+    };
+
+    string[] expected = _mock.Files.Select(e => Path.GetFileName(e)).ToArray();
+    string[] actual = Directory.GetFiles(testDir).Select(e => Path.GetFileName(e)).ToArray();
+
+    // Assert and delete test directory.
+    CollectionAssert.AreEqual(expected, actual);
+    Directory.Delete(testDir, true);
+}
+```
+
+### Main entry point
+
+```csharp
+public static void Main(string[] args)
+{
+    string filePath = string.Empty;
+
+    var reader = new Program(@"dir-file-path-here");
+    int filesCount = reader.Files.Length;
+
+    for (int i = 0; i < reader.Files.Length; i++)
+    {
+        filePath = reader.Files[i];
+        try
+        {
+            var byteSequence = reader.ReadFile(filePath);
+            string extension = reader.FindExtensionFromSignature(byteSequence);
+            reader.AmendExtension(filePath, extension);
+
+            // Log processing status.
+            Console.Write($"\rFiles left: {filesCount - i}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine();
+            Console.WriteLine($"\tError processing {Path.GetFileName(filePath)}; {ex.Message}");
+        }
+    }
+
+    Console.WriteLine($"{Environment.NewLine}DONE.");
 }
 ```
 
 ```console
-// Output.
+// Input.
+
+C:\..\2024-01-jan-binary-file-reader\test_files\unit-test\jesus-curiel-1YpDkYsoggw-unsplash.azerazr
+C:\..\2024-01-jan-binary-file-reader\test_files\unit-test\jesus-curiel-1YpDkYsoggw-unsplash.qskdjfhk
+C:\..\2024-01-jan-binary-file-reader\test_files\unit-test\jesus-curiel-1YpDkYsoggw-unsplash.wcxvwxcv
+```
+
+```console
+// Byte sequences.
 
 137 80 78 71 13 10 26 10 0 0
 255 216 255 224 0 16 74 70 73 70
 37 80 68 70 45 49 46 55 10 37
 ```
 
-## Check the output against the dictionary
-
-We then create method `FindExtensionFromSignature()`.
-
-This method works by iterating over each byte array in the dictionary (`.pdf`, `.jpg` and `.png`).
-
-We compare the first byte of the array (for `.pdf` if would be `37`), against each byte in the output.
-
-If there is a match, we check against the second byte in the sequence (`80`) and so on.
-
-If the loop iterates over the whole sequence, we break from the loop and assign the value for the key (`.pdf`) to the `Extension` property.
-
-```csharp
-// Unit test.
-
-[TestMethod()]
-public void FindExtension_Should_Output_All_File_Extensions_In_Signature()
-{
-    if (mock.Folder != Array.Empty<string>())
-    {
-        for (int i = 0; i < mock.Folder.Length; i++)
-        {
-            mock.ReadFile(mock.Folder[i]);
-            mock.FindExtensionFromSignature(mock.Output[i]);
-            Console.WriteLine(mock.Extension);
-        }
-    }
-    else
-    {
-        Assert.Fail($"File doesn't exist: {filepath}");
-    }
-}
-```
-
-```csharp
-// Program.
-
-public string Extension { get; set; }
-
-public void FindExtensionFromSignature(byte[] input)
-{
-    foreach (var entry in Signatures)
-    {
-        Extension = string.Empty;
-
-        byte expected = entry.Key[0];
-
-        for (int i = 0; i < input.Length; i++)
-        {
-            byte actual = input[i];
-
-            if (actual == expected)
-            {
-                for (int j = 1; j < entry.Key.Length; j++)
-                {
-                    byte next = input[i + j];
-
-                    if (next != entry.Key[j])
-                    {
-                        break;
-                    }
-                }
-
-                Extension = entry.Value;
-                break;
-            }
-        }
-
-        if (Extension.Length != 0)
-        {
-            break;
-        }
-    }
-}
-```
-
-## Amend the extension if conflicting
-
-We end the exercise by creating the `AmendExtension()` method.
-
-It recovers the actual extension of the file (e.g. `.azerazr`), checks against the extension stored in the `Extension` property and amends if conflicting:
-
-```csharp
-// Unit test.
-
-[TestMethod()]
-public void AmendExtension_Should_Output_True_When_Different()
-{
-    if (mock.Folder != Array.Empty<string>())
-    {
-        for (int i = 0; i < mock.Folder.Length; i++)
-        {
-            mock.ReadFile(mock.Folder[i]);
-            mock.FindExtensionFromSignature(mock.Output[i]);
-            mock.AmendExtension(mock.Folder[i]);
-        }
-    }
-    else
-    {
-        Assert.Fail($"File doesn't exist: {filepath}");
-    }
-}
-```
-
-```csharp
-// Program.
-// Here, we rely on the methods of C#'s classes Path and File.
-
-public void AmendExtension(string filepath)
-{
-    string actual = Path.GetExtension(filepath);
-
-    if (actual != Extension)
-    {
-        string output = Path.ChangeExtension(filepath, Extension);
-        File.Move(filepath, output);
-        Console.WriteLine($"File amended: {output}");
-    }
-    else
-    {
-        Console.WriteLine("Coherent file extension.");
-    }
-}
-```
-
 ```console
 // Output.
 
-File amended: C:\..\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDkYsoggw-unsplash.png
-File amended: C:\..\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDkYsoggw-unsplash.jpg
-File amended: C:\..\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDkYsoggw-unsplash.pdf
+C:\..\2024-01-jan-binary-file-reader\test_files\unit-test\jesus-curiel-1YpDkYsoggw-unsplash.png
+C:\..\2024-01-jan-binary-file-reader\test_files\unit-test\jesus-curiel-1YpDkYsoggw-unsplash.jpg
+C:\..\2024-01-jan-binary-file-reader\test_files\unit-test\jesus-curiel-1YpDkYsoggw-unsplash.pdf
 ```
 
-Our files are now sanitized!
+Input files are sanitized as a result.
 
 ## Conclusion
 
