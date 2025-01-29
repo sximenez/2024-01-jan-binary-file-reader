@@ -1,9 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using BinaryFileReader;
 
-namespace BinaryFileReader.Tests
+namespace UnitTests
 {
     [TestClass()]
-    public class ProgramTests
+    public class TestsProgram
     {
         private Program mock;
         private string filepath;
@@ -12,11 +12,12 @@ namespace BinaryFileReader.Tests
         [TestInitialize()]
         public void Init()
         {
-            mock = new Program();
 
             filepath = @"C:\Users\steven.jimenez\source\repos\2024-01-jan-binary-file-reader\test_files\jesus-curiel-1YpDkYsoggw-unsplash.jpg";
 
             directory = @"C:\Users\steven.jimenez\source\repos\2024-01-jan-binary-file-reader\test_files";
+            
+            mock = new Program(directory);
 
             mock.ReadDirectory(directory);
         }
