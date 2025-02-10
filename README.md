@@ -1,5 +1,7 @@
 # Binary file reader
 
+## Table of contents
+
   <!--TOC-->
   - [Intro](#intro)
     - [Binary -> decimal, hexadecimal -> ASCII](#binary-decimal-hexadecimal-ascii)
